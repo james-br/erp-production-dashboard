@@ -82,14 +82,10 @@ def make_order(n, created, status):
     return o
 
 
-def run():
-    app = create_app()
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-
-        n = 0
-        today = datetime.utcnow()
+def populate():
+    """Insert demo data. Assumes an active app context and existing tables."""
+    n = 0
+    today = datetime.utcnow()
 
         # Historical completed/shipped orders over the past 60 days
         for day_offset in range(60, 6, -1):
@@ -130,4 +126,10 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    from app import create_app
+
+    app = create_app()
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        populate()

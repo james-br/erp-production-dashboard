@@ -15,4 +15,4 @@ COPY backend/ .
 COPY --from=frontend /build/dist ./frontend-dist
 ENV FRONTEND_DIST=/app/frontend-dist
 EXPOSE 8000
-CMD ["sh", "-c", "gunicorn 'app:create_app()' --bind 0.0.0.0:${PORT:-8000} --workers 2"]
+CMD ["sh", "-c", "gunicorn 'app:create_app()' --preload --bind 0.0.0.0:${PORT:-8000} --workers 2"]
