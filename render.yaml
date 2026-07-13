@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: erp-production-dashboard
+    runtime: docker
+    plan: free
+    envVars:
+      - key: AUTO_SEED
+        value: "1"
+        
