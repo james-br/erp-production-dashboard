@@ -13,14 +13,36 @@ from services.zpl import work_order_label
 load_dotenv()
 
 
+FRONTEND_DIST = os.environ.get(
+    "FRONTEND_DIST",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist"),
+)
+
+
 def create_app():
-    app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-        "DATABASE_URL", "sqlite:///erp_demo.db"
-    )
+    app = Flask(__name__, static_folder=FRONTEND_DIST, static_url_path="")
+
+    database_url = os.environ.get("DATABASE_URL", "sqlite:///erp_demo.db")
+    # Render-style URLs use postgres:// which SQLAlchemy no longer accepts
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
     CORS(app)
+
+    # Create tables and seed on first boot (free hosting tiers have no shell)
+    with app.app_context():
+        db.create_all()
+        if os.environ.get("AUTO_SEED", "1") == "1" and WorkOrder.query.count() == 0:
+            from seed import populate
+            populate()
+
+    @app.get("/")
+    def index():
+        if os.path.isdir(FRONTEND_DIST):
+            return app.send_static_file("index.html")
+        return jsonify({"status": "API running. Frontend dev server: npm run dev"})
 
     # ---------- Work orders ----------
 
