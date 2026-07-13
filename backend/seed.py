@@ -9,8 +9,7 @@ Usage:  python seed.py
 import random
 from datetime import datetime, date, timedelta
 
-from app import create_app
-from models import db, WorkOrder, InventoryItem, WORKCENTERS
+from models import db, WorkOrder, InventoryItem
 
 random.seed(42)
 
@@ -87,42 +86,42 @@ def populate():
     n = 0
     today = datetime.utcnow()
 
-        # Historical completed/shipped orders over the past 60 days
-        for day_offset in range(60, 6, -1):
-            created = today - timedelta(days=day_offset)
-            for _ in range(random.randint(1, 3)):
-                n += 1
-                status = random.choice(["complete", "shipped", "shipped"])
-                db.session.add(make_order(n, created, status))
-
-        # Active floor: in progress / QC hold
-        for _ in range(9):
+    # Historical completed/shipped orders over the past 60 days
+    for day_offset in range(60, 6, -1):
+        created = today - timedelta(days=day_offset)
+        for _ in range(random.randint(1, 3)):
             n += 1
-            created = today - timedelta(days=random.randint(1, 6))
-            db.session.add(make_order(n, created, "in_progress"))
-        for _ in range(3):
-            n += 1
-            created = today - timedelta(days=random.randint(2, 7))
-            db.session.add(make_order(n, created, "qc_hold"))
+            status = random.choice(["complete", "shipped", "shipped"])
+            db.session.add(make_order(n, created, status))
 
-        # Backlog
-        for _ in range(7):
-            n += 1
-            created = today - timedelta(days=random.randint(0, 3))
-            db.session.add(make_order(n, created, "queued"))
+    # Active floor: in progress / QC hold
+    for _ in range(9):
+        n += 1
+        created = today - timedelta(days=random.randint(1, 6))
+        db.session.add(make_order(n, created, "in_progress"))
+    for _ in range(3):
+        n += 1
+        created = today - timedelta(days=random.randint(2, 7))
+        db.session.add(make_order(n, created, "qc_hold"))
 
-        for sku, name, cat, unit, cost in INVENTORY:
-            reorder = random.choice([10, 15, 20, 25])
-            # a few items intentionally below reorder point for the demo
-            on_hand = random.choice([reorder - 6, reorder - 3, reorder + 15,
-                                     reorder + 30, reorder + 60])
-            db.session.add(InventoryItem(
-                sku=sku, name=name, category=cat, unit=unit,
-                on_hand=max(on_hand, 0), reorder_point=reorder, unit_cost=cost,
-            ))
+    # Backlog
+    for _ in range(7):
+        n += 1
+        created = today - timedelta(days=random.randint(0, 3))
+        db.session.add(make_order(n, created, "queued"))
 
-        db.session.commit()
-        print(f"Seeded {n} work orders and {len(INVENTORY)} inventory items.")
+    for sku, name, cat, unit, cost in INVENTORY:
+        reorder = random.choice([10, 15, 20, 25])
+        # a few items intentionally below reorder point for the demo
+        on_hand = random.choice([reorder - 6, reorder - 3, reorder + 15,
+                                 reorder + 30, reorder + 60])
+        db.session.add(InventoryItem(
+            sku=sku, name=name, category=cat, unit=unit,
+            on_hand=max(on_hand, 0), reorder_point=reorder, unit_cost=cost,
+        ))
+
+    db.session.commit()
+    print(f"Seeded {n} work orders and {len(INVENTORY)} inventory items.")
 
 
 if __name__ == "__main__":
